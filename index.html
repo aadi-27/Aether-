@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Aether</title>
+    <link rel="icon" type="image/x-icon" href="ea36b07c-869b-41f6-b17a-7893301e81b9.svg">
+    <style>
+        :root {
+            --background-color: #f3f4f6;
+            --text-color: #333;
+            --form-bg-color: #ffffff;
+            --button-bg-color: #4CAF50;
+            --button-hover-bg-color: #45a049;
+            --file-border-color: #ccc;
+            --link-color: #007BFF;
+        }
+
+        [data-theme="dark"] {
+            --background-color: #1e1e2f;
+            --text-color: #f0f0f0;
+            --form-bg-color: #2c2c3d;
+            --button-bg-color: #5a9f64;
+            --button-hover-bg-color: #4a8f54;
+            --file-border-color: #555;
+            --link-color: #66b3ff;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .form-container {
+            background-color: var(--form-bg-color);
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        input[type="file"] {
+            display: block;
+            margin: 15px auto 20px;
+            padding: 8px 10px;
+            border: 2px dashed var(--file-border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            background-color: var(--form-bg-color);
+            color: var(--text-color);
+            transition: border-color 0.3s;
+        }
+
+        button {
+            background-color: var(--button-bg-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--button-hover-bg-color);
+            transform: scale(1.03);
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 20px 0 0;
+        }
+
+        ul li {
+            padding: 10px 15px;
+            background: var(--form-bg-color);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-color);
+        }
+
+        ul li a {
+            text-decoration: none;
+            color: var(--link-color);
+            transition: color 0.3s;
+        }
+
+        ul li a:hover {
+            color: #0056b3;
+        }
+
+        .toggle-container {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="form-container">
+        <div class="toggle-container">
+            <label for="themeToggle">Toggle Dark Mode:</label>
+            <input type="checkbox" id="themeToggle" onclick="toggleDarkMode()">
+        </div>
+        <h2>Upload Your File</h2>
+        <form id="uploadForm">
+            <label for="fileInput">Choose a file:</label>
+            <input type="file" id="fileInput" />
+            <button type="button" onclick="uploadFile()">Upload</button>
+        </form>
+        <h3>Uploaded Files:</h3>
+        <ul id="fileList"></ul>
+    </div>
+
+    <script type="module">
+        // Firebase SDK Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-storage.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ_zAk0D41eoWALmgQ09pW6PqX6PMCno0",
+            authDomain: "cloud-storage-system-1e499.firebaseapp.com",
+            projectId: "cloud-storage-system-1e499",
+            storageBucket: "cloud-storage-system-1e499.appspot.com",
+            messagingSenderId: "535628824395",
+            appId: "1:535628824395:web:b053a850ed617d3e74f2ce",
+            measurementId: "G-9SP7NTC2PL"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+
+        // Upload Function
+        window.uploadFile = async function() {
+            const fileInput = document.getElementById("fileInput");
+            const fileList = document.getElementById("fileList");
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const storageRef = ref(storage, 'uploads/' + file.name);
+
+                try {
+                    // Upload
+                    const snapshot = await uploadBytes(storageRef, file);
+                    const downloadURL = await getDownloadURL(snapshot.ref);
+
+                    // Add to list
+                    const listItem = document.createElement("li");
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = downloadURL;
+                    downloadLink.textContent = file.name;
+                    downloadLink.target = "_blank";
+
+                    listItem.textContent = "Uploaded: ";
+                    listItem.appendChild(downloadLink);
+                    fileList.appendChild(listItem);
+
+                    alert("Upload successful!");
+                    fileInput.value = "";
+                } catch (error) {
+                    console.error("Upload failed:", error);
+                    alert("Upload failed: " + error.message);
+                }
+            } else {
+                alert("Please select a file to upload.");
+            }
+        };
+
+        // Dark Mode Toggle
+        window.toggleDarkMode = function() {
+            const body = document.body;
+            const themeToggle = document.getElementById("themeToggle");
+            body.setAttribute("data-theme", themeToggle.checked ? "dark" : "light");
+        };
+    </script>
+</body>
+</html>
